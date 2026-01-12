@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(cors()); // ده عشان يسمح للتطبيق يكلم السيرفر من غير مشاكل
 
 // --- بياناتك السرية (محدش هيشوفها هنا) ---
-const API_KEY = "حط_هنا_الـ_API_KEY_الحقيقي_بتاعك";
+const API_KEY = "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRFeU1UazVOQ3dpYm1GdFpTSTZJakUzTmpneU5ERXhOalF1TURReE1UYzVJbjAua3dBdWhIWDNENDRkY1JSNVBIa25GUHRES1JWbUpFeTFhQTlMeEp3YXRDQzh5WW1WbDY3REhPQ0RHSkFKX1ZiY0xBZUdpaGJmcEplbzJ4ZDNOdlU4LXc=";
 const INTEGRATION_ID = 5466353;
 
 app.post('/create-payment', async (req, res) => {
@@ -56,4 +56,5 @@ app.post('/create-payment', async (req, res) => {
 
 // تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => console.log(`سيرفر مساري شغال على بورت ${PORT}`));
