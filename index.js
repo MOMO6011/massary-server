@@ -3,10 +3,10 @@ const axios = require('axios');
 const cors = require('cors');
 const app = express();
 
-// إعدادات الـ CORS عشان تشتغل مع vercel.json بسلاسة
 app.use(cors());
 app.use(express.json());
 
+// البيانات الخاصة بيك
 const API_KEY = "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRFeU1UazVOQ3dpYm1GdFpTSTZJakUzTmpneU5ERXhOalF1TURReE1UYzVJbjAua3dBdWhIWDNENDRkY1JSNVBIa25GUHRES1JWbUpFeTFhQTlMeEp3YXRDQzh5WW1WbDY3REhPQ0RHSkFKX1ZiY0xBZUdpaGJmcEplbzJ4ZDNOdlU4LXc=";
 const INTEGRATION_ID = 5466353;
 
@@ -22,8 +22,13 @@ app.post('/create-payment', async (req, res) => {
             return res.status(400).json({ error: "المبلغ غير صحيح" });
         }
 
-        // 1. الحصول على الـ Auth Token
-        const authRes = await axios.post('https://api.paymob.com/api/auth/tokens', { "api_key": API_KEY });
+        // 1. الحصول على الـ Auth Token (رجعناه لـ egypt)
+        const authRes = await axios.post('https://egypt.paymob.com/api/auth/tokens', { 
+            "api_key": API_KEY 
+        }, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
         const token = authRes.data.token;
 
         // 2. تسجيل الطلب
@@ -54,22 +59,19 @@ app.post('/create-payment', async (req, res) => {
             integration_id: INTEGRATION_ID
         });
 
-        // 4. الرد باللينك النهائي
+        // 4. الرد باللينك النهائي لمحفظة الموبايل
         res.json({ 
             success: true,
             url: `https://egypt.paymob.com/api/acceptance/iframes/mobile_wallet?payment_token=${keyRes.data.token}` 
         });
 
     } catch (error) {
-        // أهم جزء: استخراج تفاصيل الخطأ اللي جاية من Paymob
-        let errorMessage = "حدث خطأ غير متوقع";
         let detailedError = error.message;
-
         if (error.response && error.response.data) {
             detailedError = error.response.data;
-            // Paymob بتبعت تفاصيل الغلط هنا
-            console.error("Paymob Error Response:", detailedError);
         }
+
+        console.error("Paymob Error:", detailedError);
 
         res.status(500).json({ 
             error: "فشل في التواصل مع Paymob", 
@@ -80,4 +82,3 @@ app.post('/create-payment', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Masary Server Running`));
-
