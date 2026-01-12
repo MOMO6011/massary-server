@@ -1,12 +1,8 @@
 const express = require('express');
-const axios = require('axios');
 const cors = require('cors');
 const app = express();
 
-// إعداد CORS بشكل يسمح بكل شيء فعلياً للتجربة
-app.use(cors()); 
-app.options('*', cors()); // مهم جداً للرد على طلب الـ Preflight
-
+app.use(cors()); // سيبها فاضية كدة عشان تعتمد على إعدادات الـ vercel.json
 app.use(express.json());
 
 const API_KEY = "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRFeU1UazVOQ3dpYm1GdFpTSTZJakUzTmpneU5ERXhOalF1TURReE1UYzVJbjAua3dBdWhIWDNENDRkY1JSNVBIa25GUHRES1JWbUpFeTFhQTlMeEp3YXRDQzh5WW1WbDY3REhPQ0RHSkFKX1ZiY0xBZUdpaGJmcEplbzJ4ZDNOdlU4LXc=";
@@ -57,3 +53,4 @@ app.post('/create-payment', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running`));
+
