@@ -23,9 +23,7 @@ app.post('/create-payment', async (req, res) => {
         }
 
         // 1. الحصول على الـ Auth Token
-        const authRes = await axios.post('https://egypt.paymob.com/api/auth/tokens', { 
-            "api_key": API_KEY 
-        });
+        const authRes = await axios.post('https://api.paymob.com/api/auth/tokens', { "api_key": API_KEY });
         const token = authRes.data.token;
 
         // 2. تسجيل الطلب
@@ -82,3 +80,4 @@ app.post('/create-payment', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Masary Server Running`));
+
