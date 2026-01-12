@@ -6,24 +6,32 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. حط هنا الـ API Key الجديد بعد ما تدوس Recreate
+// الـ API KEY اللي إنت حطيته سليم وشكله لسه معمول له Recreate حالا
 const API_KEY = "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRFeU1UazVOQ3dpYm1GdFpTSTZJakUzTmpneU5USTRNVE11TWpFMk5UQTJJbjAuelY1NTJUak9venBRaUVFTnlyQzI1SDZYcVlFMzl1Q0RVR19MSndmajZGS1ZlQS0wZXNsd0VPRGptaV8wV1BBM0M0b3pVcEowb2xwLXlGaGRxdXdtZ1E="; 
 
-// 2. الـ ID الصح للمحافظ الإلكترونية من صورتك
+// الـ ID الخاص بالمحافظ الإلكترونية (Mobile Wallet)
 const INTEGRATION_ID = 5466353; 
+
+app.get('/', (req, res) => res.send('Masary Server is Active! 🚀'));
 
 app.post('/create-payment', async (req, res) => {
     try {
         const { amount } = req.body;
 
-        // الخطوة 1: الـ Auth
-        const authRes = await axios.post('https://egypt.paymob.com/api/auth/tokens', { 
-            "api_key": API_KEY.trim() // الـ trim دي بتشيل أي مسافة زيادة
+        if (!amount) return res.status(400).json({ error: "المبلغ مطلوب" });
+
+        // --- الخطوة 1: الـ Auth (استخدام الرابط العالمي api.paymob.com) ---
+        // ضفنا Headers صريحة هنا لضمان قبول الـ Credentials
+        const authRes = await axios.post('https://api.paymob.com/api/auth/tokens', { 
+            "api_key": API_KEY.trim() 
+        }, {
+            headers: { 'Content-Type': 'application/json' }
         });
+        
         const token = authRes.data.token;
 
-        // الخطوة 2: الطلب
-        const orderRes = await axios.post('https://egypt.paymob.com/api/ecommerce/orders', {
+        // --- الخطوة 2: تسجيل الطلب ---
+        const orderRes = await axios.post('https://api.paymob.com/api/ecommerce/orders', {
             auth_token: token,
             delivery_needed: "false",
             amount_cents: Math.round(amount * 100),
@@ -31,27 +39,42 @@ app.post('/create-payment', async (req, res) => {
             items: []
         });
 
-        // الخطوة 3: الـ Payment Key
-        const keyRes = await axios.post('https://egypt.paymob.com/api/acceptance/payment_keys', {
+        // --- الخطوة 3: الـ Payment Key ---
+        const keyRes = await axios.post('https://api.paymob.com/api/acceptance/payment_keys', {
             auth_token: token,
             amount_cents: Math.round(amount * 100),
             expiration: 3600,
             order_id: orderRes.data.id,
             billing_data: {
-                "first_name": "Masary", "last_name": "User", "email": "test@masary.com",
-                "phone_number": "+201000000000", "city": "Cairo", "country": "EG"
+                "first_name": "Masary", 
+                "last_name": "User", 
+                "email": "test@masary.com",
+                "phone_number": "+201000000000", 
+                "apartment": "NA", "floor": "NA", "street": "NA",
+                "building": "NA", "postal_code": "NA", "city": "Cairo", 
+                "country": "EG", "state": "NA"
             },
             currency: "EGP",
             integration_id: INTEGRATION_ID
         });
 
-        res.json({ url: `https://egypt.paymob.com/api/acceptance/iframes/mobile_wallet?payment_token=${keyRes.data.token}` });
+        // الرد برابط محفظة الموبايل النهائي
+        res.json({ 
+            success: true,
+            url: `https://api.paymob.com/api/acceptance/iframes/mobile_wallet?payment_token=${keyRes.data.token}` 
+        });
 
     } catch (error) {
-        console.error("Error Detail:", error.response ? error.response.data : error.message);
-        res.status(500).json({ error: "فشل الاتصال", details: error.response ? error.response.data : error.message });
+        // طباعة تفصيلية للخطأ في الـ Logs عشان نعرف لو فيه مشكلة في الـ Integration ID
+        const detailedError = error.response ? error.response.data : error.message;
+        console.error("Paymob Error Details:", JSON.stringify(detailedError));
+        
+        res.status(500).json({ 
+            error: "فشل في التواصل مع Paymob", 
+            details: detailedError 
+        });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Masary Server Live`));
+app.listen(PORT, () => console.log(`Masary Server Live on Port ${PORT}`));
