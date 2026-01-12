@@ -3,37 +3,36 @@ const axios = require('axios');
 const cors = require('cors');
 const app = express();
 
-// --- التعديل هنا ---
-app.use(cors({
-    origin: "*", // بيسمح لأي موقع (زي localhost أو الـ APK) يكلم السيرفر
-    methods: ["GET", "POST"], // بيحدد العمليات المسموحة
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// إعداد CORS بشكل يسمح بكل شيء فعلياً للتجربة
+app.use(cors()); 
+app.options('*', cors()); // مهم جداً للرد على طلب الـ Preflight
 
 app.use(express.json());
 
-// بياناتك السرية
 const API_KEY = "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRFeU1UazVOQ3dpYm1GdFpTSTZJakUzTmpneU5ERXhOalF1TURReE1UYzVJbjAua3dBdWhIWDNENDRkY1JSNVBIa25GUHRES1JWbUpFeTFhQTlMeEp3YXRDQzh5WW1WbDY3REhPQ0RHSkFKX1ZiY0xBZUdpaGJmcEplbzJ4ZDNOdlU4LXc=";
 const INTEGRATION_ID = 5466353;
+
+// دالة بسيطة للتأكد إن السيرفر شغال (اختياري)
+app.get('/', (req, res) => res.send('Masary Server is Live!'));
 
 app.post('/create-payment', async (req, res) => {
     try {
         const { amount } = req.body;
-
-        // 1. الحصول على Auth Token
+        
+        // الخطوة 1: Auth
         const authRes = await axios.post('https://egypt.paymob.com/api/auth/tokens', { "api_key": API_KEY });
         const token = authRes.data.token;
 
-        // 2. تسجيل الطلب (Order)
+        // الخطوة 2: Order
         const orderRes = await axios.post('https://egypt.paymob.com/api/ecommerce/orders', {
             auth_token: token,
             delivery_needed: "false",
-            amount_cents: Math.round(amount * 100), // استخدام Math.round لضمان إنه رقم صحيح
+            amount_cents: Math.round(amount * 100),
             currency: "EGP",
             items: []
         });
 
-        // 3. الحصول على مفتاح الدفع (Payment Key)
+        // الخطوة 3: Payment Key
         const keyRes = await axios.post('https://egypt.paymob.com/api/acceptance/payment_keys', {
             auth_token: token,
             amount_cents: Math.round(amount * 100),
@@ -48,16 +47,13 @@ app.post('/create-payment', async (req, res) => {
             integration_id: INTEGRATION_ID
         });
 
-        const paymentToken = keyRes.data.token;
-        const finalUrl = `https://egypt.paymob.com/api/acceptance/iframes/mobile_wallet?payment_token=${paymentToken}`;
-        
-        res.json({ url: finalUrl });
+        res.json({ url: `https://egypt.paymob.com/api/acceptance/iframes/mobile_wallet?payment_token=${keyRes.data.token}` });
 
     } catch (error) {
-        console.error("Error details:", error.response ? error.response.data : error.message);
-        res.status(500).json({ error: "فشل في تجهيز عملية الدفع", details: error.message });
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`سيرفر مساري شغال على بورت ${PORT}`));
+app.listen(PORT, () => console.log(`Server running`));
